@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">CraveList</string>
+
+    <string name="hello_world">Hello world!</string>
+
+    <string name="action_search">Search List...coming soon</string>
+    <string name="action_new_item">New Item</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_delete_all_items">Clear List</string>
+    <string name="action_help">Help</string>
+
+    <!--Add Food Item Strings-->
+    <string name="food_item_name">Eat what?</string>
+    <string name="food_item_location">Restaurant, City</string>
+    <string name="save_details">Save</string>
+    <string name="action_save">Save Food Item</string>
+    <string name="title_activity_new_food_item">New Food Entry</string>
+    <string name="title_activity_edit_food_item">Edit Food Entry</string>
+    <string name="food_review_hint">How did it taste?</string>
+
+    <!-- Strings for ratings!-->
+    <string name="one_star">Never Again!</string>
+    <string name="two_star">Okay I guess</string>
+    <string name="three_star">That\'ll do pig...</string>
+    <string name="four_star">Yummy in my tummy!</string>
+    <string name="five_star">ERMAHGERD</string>
+
+</resources>

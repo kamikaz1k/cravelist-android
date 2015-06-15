@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="main_view_banner">#4CAF50</color>
+    <!--<color name="main_view_banner">#299868</color>-->
+    <color name="main_view_accent">#FFC107</color>
+
+    <color name="main_view_food">#000000</color>
+    <color name="main_view_location">#000000</color>
+    <color name="main_view_background">#FFFFFF</color>
+
+    <color name="detailed_view_food">#000000</color>
+    <color name="detailed_view_location">#000000</color>
+    <color name="detailed_view_hint_text">#DDFFFFFF</color>
+    <color name="detailed_view_food_name">#FFFFFF</color>
+    <color name="detailed_view_food_location">#FFFFFF</color>
+
+    <color name="list_item_selected">#edeee3</color>
+    <color name="list_item_selected_color_light">#FFFFFFFF</color>
+    <color name="list_item_selected_color_dark">#5500ddff</color>
+
+    <color name="tab_highlight">#FFF</color>
+    <color name="tab_pressed">#52b</color>
+
+</resources>
