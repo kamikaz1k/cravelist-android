@@ -32,7 +32,7 @@
                 android:clickable="true"
                 android:hint="Tap to add a picture!"
                 android:onClick="selectImage"
-                android:tag="No Picture" />
+                android:tag="" />
 
             <EditText
                 android:id="@+id/foodItemNameEditText"

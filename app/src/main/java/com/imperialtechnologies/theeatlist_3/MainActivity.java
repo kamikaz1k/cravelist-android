@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.imperialtechnologies.theeatlist_3.stab.SlidingTabLayout;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class MainActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -159,15 +160,21 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         // request code is the code sent out from startActivityForResult
         // result code is the first argument in setResult() from the returning intent
 
+        Log.d(TAG, "requestCode: " + Integer.toString(requestCode));
+        Log.d(TAG, "EDIT_FOOD_ITEM: " + Integer.toString(EDIT_FOOD_ITEM));
+        Log.d(TAG, "NEW_FOOD_ITEM: " + Integer.toString(NEW_FOOD_ITEM));
+
         switch (requestCode) {
 
             case NEW_FOOD_ITEM:
                 Log.d(TAG,"Returned from NEW FOOD");
                 refreshFoodList();
+                break;
 
             case EDIT_FOOD_ITEM:
                 Log.d(TAG,"Returned from EDIT FOOD");
                 refreshFoodList();
+                break;
         }
 
     }
@@ -178,6 +185,7 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
         //TODO - close EATEN list too?
         getLoaderManager().destroyLoader(FULL_FOOD_LIST);
+        getLoaderManager().destroyLoader(EATEN_LIST);
         dbTools.close();
     }
 
@@ -187,7 +195,7 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
             case FULL_FOOD_LIST:
                 foodListLoader = new FoodListLoader(getApplicationContext());
-                Log.d(TAG, "LoaderID: " + Integer.toString(id)+ " foodListLoader FoodLoader Created");
+                Log.d(TAG, "LoaderID: " + Integer.toString(id) + " foodListLoader FoodLoader Created");
                 return foodListLoader;
 
             case EATEN_LIST:
@@ -252,13 +260,24 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
     public void refreshFoodList(){
 
-        Log.i("MainActivity", "Refreshing Food List");
+        Log.i(TAG, "Refreshing Food List");
 
-        Log.d("MainActivity", "Triggering foodListLoader.onContentChanged");
+        Log.d(TAG, "Triggering foodListLoader.onContentChanged");
         foodListLoader.onContentChanged();
 
-        Log.d("MainActivity", "Triggering eatenListLoader.onContentChanged");
+        Log.d(TAG, "Triggering eatenListLoader.onContentChanged");
         eatenListLoader.onContentChanged();
+
+    }
+
+    public void refreshFoodList(String eaten, String foodId){
+
+        HashMap<String,String> foodDetails = dbTools.getFoodItemDetails(foodId);
+
+        String[] foodItem = {foodDetails.get("_id"),foodDetails.get("foodItemName"),foodDetails.get("foodItemLocation")};
+        //"_id","foodItemName", "foodItemLocation"
+
+        //cant foodListAdapter.add(); - not a valid method...
 
     }
 

@@ -15,7 +15,6 @@
 
     <!-- Help action button -->
     <item android:id="@+id/action_help"
-        android:icon="@drawable/ic_action_delete"
         android:title="@string/action_help"
         app:showAsAction="never" />
 

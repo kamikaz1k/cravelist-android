@@ -19,6 +19,10 @@
     <string name="title_activity_edit_food_item">Edit Food Entry</string>
     <string name="food_review_hint">How did it taste?</string>
 
+    <!--Edit Food Item String-->
+    <string name="action_share">Share Item</string>
+    <string name="action_delete">Delete Item</string>
+
     <!-- Strings for ratings!-->
     <string name="one_star">Never Again!</string>
     <string name="two_star">Okay I guess</string>

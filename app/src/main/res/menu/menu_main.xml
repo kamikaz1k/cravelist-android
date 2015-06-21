@@ -9,7 +9,7 @@
 
     <!-- Search, should appear as action button -->
     <item android:id="@+id/action_new_item"
-        android:icon="@drawable/ic_action_add_item"
+        android:icon="@drawable/ic_add_item"
         android:title="@string/action_new_item"
         app:showAsAction="ifRoom" />
 
@@ -21,13 +21,11 @@
 
     <!-- Search, should appear as action button -->
     <item android:id="@+id/action_delete_all_items"
-        android:icon="@drawable/ic_action_add_item"
         android:title="@string/action_delete_all_items"
         app:showAsAction="never" />
 
     <!-- Search, should appear as action button -->
     <item android:id="@+id/action_main_help"
-        android:icon="@drawable/ic_action_add_item"
         android:title="@string/action_help"
         app:showAsAction="never" />
 

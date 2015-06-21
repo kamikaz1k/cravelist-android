@@ -4,6 +4,8 @@
     <!--<color name="main_view_banner">#299868</color>-->
     <color name="main_view_accent">#FFC107</color>
 
+    <color name="main_view_status_bar">#388E3C</color>
+
     <color name="main_view_food">#000000</color>
     <color name="main_view_location">#000000</color>
     <color name="main_view_background">#FFFFFF</color>
@@ -14,7 +16,7 @@
     <color name="detailed_view_food_name">#FFFFFF</color>
     <color name="detailed_view_food_location">#FFFFFF</color>
 
-    <color name="list_item_selected">#edeee3</color>
+    <color name="list_item_selected">#B6B6B6</color>
     <color name="list_item_selected_color_light">#FFFFFFFF</color>
     <color name="list_item_selected_color_dark">#5500ddff</color>
 
