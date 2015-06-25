@@ -5,19 +5,21 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by kdandang on 6/13/2015.
  */
 public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
 
+    public static final String TAG = "MyFragmentPagerAdapter";
+
     private Context context;
-    SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
     ArrayList<Fragment> fragmentList = new ArrayList<>();
+    private static HashMap<Integer,String> positionToTag = new HashMap<>();
 
     public int TAB_COUNT = 3;
     private String tabTitles[] = new String[] {"List", "Eaten", "Friends"};
@@ -35,9 +37,11 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     public Object instantiateItem(ViewGroup container, int position) {
 
         Fragment fragment = (Fragment) super.instantiateItem(container, position);
-        registeredFragments.put(position, fragment);
+        Log.d(TAG, "instantiateItem Position value: " + Integer.toString(position));
 
-        Log.d("PagerAdapter", "Position value: " + Integer.toString(position));
+        positionToTag.put(position, fragment.getTag());
+        Log.d(TAG, "positionToTag Position: " + Integer.toString(position)
+                + " hashTag: " + positionToTag.get(position));
 
         return fragment;
 
@@ -46,7 +50,8 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
 
-        registeredFragments.remove(position);
+        Log.w(TAG,"starting destroyItem on position: " + Integer.toString(position));
+        fragmentList.remove(position);
         super.destroyItem(container, position, object);
 
     }
@@ -64,6 +69,8 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
 
+        Log.d(TAG,"starting getItem");
+
         if (fragmentList.isEmpty()) {
             //so it works with an empty fragment list? its stupid lol..
             switch (position) {
@@ -74,27 +81,50 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
                 case 2:
                     return new FragmentFriendsList();
                 default:
-                    Log.wtf("FragmentPagerAdapter", "getItem(): Position requested was not within bounds");
+                    Log.wtf(TAG, "getItem(): Position requested was not within bounds");
                     return null;
             }
         } else {
 
-            Log.d("MFPA","Returning Fragment in position: " + Integer.toString(position));
+            Log.d(TAG,"Returning Fragment in position: " + Integer.toString(position));
             return fragmentList.get(position);
 
         }
 
     }
 
-    public Fragment getRegisteredFragment(int position){
+    public Fragment getFragmentFromPosition(int position){
 
-        Fragment frag = registeredFragments.get(position);
-        if (frag == null) {
-            Log.d("getRegFrag", "Position: " + Integer.toString(position));
+        Log.d(TAG,"starting getFragmentFromPosition");
+
+        Fragment fragment = fragmentList.get(position);
+        if (fragment == null) {
+            Log.d(TAG, "Failed to get Fragment @ Position: " + Integer.toString(position));
         }
 
-        return frag;
+        return fragment;
 
+    }
+
+    /**
+     * Returns the tag for the fragment in the requested position.
+     * The tag and position values are based on when the fragments
+     * were instantiated in the instantiateItem method.
+     *
+     * @param position
+     * @return the tag for the position requested, or in case of
+     * failure it returns the String "Empty String"
+     */
+    public String getTagOfPosition(int position){
+
+        if (positionToTag.containsKey(position)){
+            Log.d(TAG,"positionToTag Success");
+            return positionToTag.get(position);
+        }
+
+
+        Log.d(TAG,"positionToTag Failure");
+        return "Empty String";
     }
 
     /**

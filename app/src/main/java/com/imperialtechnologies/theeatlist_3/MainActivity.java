@@ -31,12 +31,12 @@ import java.util.HashMap;
 
 public class MainActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    public final static String ACTIVE_TAB = "com.imperialtechnologies.com.imperialtechnologies.theeatlist_3.MainActivity.ACTIVE_TAB";
+    public final static String ACTIVE_TAB = "com.imperialtechnologies.theeatlist_3.MainActivity.ACTIVE_TAB";
     public final static String TAG = "MainActivity";
 
-    ListFragment listTabFragment = new FragmentMainList();
-    ListFragment eatenTabFragment = new FragmentMainList();
-    ListFragment friendsTabFragment = new FragmentFriendsList();
+    private static ListFragment listTabFragment = new FragmentMainList();
+    private static ListFragment eatenTabFragment = new FragmentMainList();
+    private static ListFragment friendsTabFragment = new FragmentFriendsList();
 
     //
     MyFragmentPagerAdapter pagerAdapter;
@@ -66,7 +66,12 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initializeFragments();
+
         initializeToolbarAndTabs();
+
+        populateListFragment();
+        populateEatenListFragment();
 
         //Start the Async Loaders
         mCallbacks = this;
@@ -75,8 +80,15 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         getSupportLoaderManager().initLoader(FULL_FOOD_LIST, null, mCallbacks);
         getSupportLoaderManager().initLoader(EATEN_LIST, null, mCallbacks);
 
-        populateListFragment();
-        populateEatenListFragment();
+        getSupportLoaderManager().enableDebugLogging(true);
+
+    }
+
+    private void initializeFragments(){
+
+        listTabFragment = new FragmentMainList();
+        eatenTabFragment = new FragmentMainList();
+        friendsTabFragment = new FragmentFriendsList();
 
     }
 
@@ -93,6 +105,9 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         fragments.add(friendsTabFragment);
 
         final ViewPager viewPager = (ViewPager) findViewById(R.id.viewPager);
+        viewPager.setOffscreenPageLimit(2);
+        // default is 1, and was causing failure on the overridden destroyItem method in MyFragmentPagerAdapter
+        // curious however, because this was not an issue till I started checking for tags in the adapter setting methods
 
         viewPager.setAdapter(new MyFragmentPagerAdapter(getSupportFragmentManager(), this, fragments));
 
@@ -131,6 +146,14 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
         Log.d(TAG, "Getting fragment for list adapter");
         listTabFragment.setListAdapter(foodListAdapter);
+
+        Log.d(TAG, "tagOfPosition 0: " + pagerAdapter.getTagOfPosition(0));
+        if (!pagerAdapter.getTagOfPosition(0).equals("Empty String")){
+            ListFragment fragment = (ListFragment) getSupportFragmentManager().findFragmentByTag(pagerAdapter.getTagOfPosition(0));
+            fragment.setListAdapter(foodListAdapter);
+            Log.d(TAG,"Fragment recovered and adapter set");
+        }
+
         Log.d(TAG, "Adapter setup for main list");
 
     }
@@ -146,13 +169,27 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
             @Override
             public Cursor runQuery(CharSequence constraint) {
 
+                // TODO - Need a dbTools method for eaten filtered foods
                 return dbTools.getCursorAllFilteredFoodItems(constraint.toString());
 
             }
         };
 
         eatenListAdapter.setFilterQueryProvider(searchFilter);
+
+        Log.d(TAG, "Getting fragment for list adapter");
         eatenTabFragment.setListAdapter(eatenListAdapter);
+
+        // Check that if there is a fragment to recover, (i.e. from orientation changes),
+        // that it receives the adapter
+        Log.d(TAG, "tagOfPosition 1: " + pagerAdapter.getTagOfPosition(1));
+        if (!pagerAdapter.getTagOfPosition(1).equals("Empty String")){ // Empty String is default fail response
+            ListFragment fragment = (ListFragment) getSupportFragmentManager().findFragmentByTag(pagerAdapter.getTagOfPosition(1));
+            fragment.setListAdapter(eatenListAdapter);
+            Log.d(TAG,"Fragment recovered and adapter set");
+        }
+
+        Log.d(TAG, "Adapter setup for eaten list");
 
     }
 
@@ -181,12 +218,13 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
 
-        //TODO - close EATEN list too?
-        getLoaderManager().destroyLoader(FULL_FOOD_LIST);
-        getLoaderManager().destroyLoader(EATEN_LIST);
+        Log.i(TAG,"calling onDestroy()");
+        getSupportLoaderManager().destroyLoader(FULL_FOOD_LIST);
+        getSupportLoaderManager().destroyLoader(EATEN_LIST);
         dbTools.close();
+
+        super.onDestroy();
     }
 
     public FoodListLoader onCreateLoader(int id, Bundle args) {
