@@ -13,9 +13,9 @@ import java.util.HashMap;
 
 public class DBTools extends SQLiteOpenHelper {
 
-    public final String TAG = "DBTools";
-    public final String EATEN = "eaten";
-    public final int EATEN_COL = 6;
+    public final static String TAG = "DBTools";
+    public final static String EATEN = "eaten";
+    public final static int EATEN_COL = 6;
 
     public DBTools(Context applicationContext){
 

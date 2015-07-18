@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import de.greenrobot.event.EventBus;
+
 public class FragmentEatenList extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor>{
 //AdapterViewCompat.OnItemClickListener,
     private static final String TAG = "FragmentEatenList";
@@ -46,6 +48,14 @@ public class FragmentEatenList extends ListFragment implements LoaderManager.Loa
 
     }
 
+    public void onEvent(UpdateFoodListEvent event){
+
+        //If the foodlistupdate event is triggered reload the loader
+        Log.d(TAG, "Event received");
+        eatenListLoader.onContentChanged();
+
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data){
 
         //TODO - refresh list adapter?
@@ -63,9 +73,22 @@ public class FragmentEatenList extends ListFragment implements LoaderManager.Loa
         //Start loader
         mCallbacks = this;
         getActivity().getSupportLoaderManager().initLoader(1, null, mCallbacks);
-
         getActivity().getSupportLoaderManager().enableDebugLogging(true);
 
+        //register for events
+        EventBus.getDefault().register(this);
+
+    }
+
+    @Override
+    public void onDestroy() {
+
+        //Unregister for events
+        EventBus.getDefault().unregister(this);
+
+        //TODO - do I need to destroy/Close loaders
+
+        super.onDestroy();
     }
 
     /**

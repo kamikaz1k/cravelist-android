@@ -886,5 +886,7 @@ public class EditFoodItem extends ActionBarActivity {
 
         dbTools.close();
 
+        overridePendingTransition(R.animator.fade_rise, R.animator.push_right_out);
+
     }
 }

@@ -3,15 +3,11 @@ package com.imperialtechnologies.theeatlist_3;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
@@ -28,17 +24,19 @@ import com.imperialtechnologies.theeatlist_3.stab.SlidingTabLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import de.greenrobot.event.EventBus;
 
-public class MainActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+public class MainActivity extends ActionBarActivity {
 
     public final static String ACTIVE_TAB = "com.imperialtechnologies.theeatlist_3.MainActivity.ACTIVE_TAB";
     public final static String TAG = "MainActivity";
 
-    private static ListFragment listTabFragment = new FragmentMainList();
-    private static ListFragment eatenTabFragment = new FragmentMainList();
-    private static ListFragment friendsTabFragment = new FragmentFriendsList();
+    private static ListFragment listTabFragment;
+    private static ListFragment eatenTabFragment;
+    private static ListFragment friendsTabFragment;
 
-    //
+    //PagerAdapter declaration
     MyFragmentPagerAdapter pagerAdapter;
 
     // The Intent is used to issue an operation should be performed
@@ -48,18 +46,12 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
     // The object that allows me to manipulate the database
     DBTools dbTools;
 
-    //Loader references
-    private final static int FULL_FOOD_LIST = 0;
-    private final static int EATEN_LIST = 1;
-    private final static Integer FOOD_DETAILS = 2;
-    private LoaderManager.LoaderCallbacks<Cursor> mCallbacks;
-    private FoodListLoader foodListLoader;
-    private FoodListLoader eatenListLoader;
-    SimpleCursorAdapter foodListAdapter;
-    SimpleCursorAdapter eatenListAdapter;
-    FoodListCursorWrapper eatenCursorWrapper;
+    //filter references
     FilterQueryProvider searchFilter;
     FilterQueryProvider eatenFilter;
+
+    //Declare event bus
+    UpdateFoodListEvent event = new UpdateFoodListEvent();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,24 +62,15 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
         initializeToolbarAndTabs();
 
-        populateListFragment();
-        populateEatenListFragment();
-
-        //Start the Async Loaders
-        mCallbacks = this;
+        //Only used for delete all items - deprecate it soon
         dbTools = new DBTools(this);
-
-        getSupportLoaderManager().initLoader(FULL_FOOD_LIST, null, mCallbacks);
-        getSupportLoaderManager().initLoader(EATEN_LIST, null, mCallbacks);
-
-        getSupportLoaderManager().enableDebugLogging(true);
 
     }
 
     private void initializeFragments(){
 
         listTabFragment = new FragmentMainList();
-        eatenTabFragment = new FragmentMainList();
+        eatenTabFragment = new FragmentEatenList();
         friendsTabFragment = new FragmentFriendsList();
 
     }
@@ -126,73 +109,6 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
     }
 
-    public void populateListFragment(){
-
-        foodListAdapter = new SimpleCursorAdapter(this,R.layout.food_item_listview, null,
-                new String[] { "_id","foodItemName", "foodItemLocation"},
-                new int[] {R.id.foodId, R.id.foodItemNameTextView, R.id.foodItemLocationTextView},0);
-
-        searchFilter = new FilterQueryProvider() {
-
-            @Override
-            public Cursor runQuery(CharSequence constraint) {
-
-                return dbTools.getCursorAllFilteredFoodItems(constraint.toString());
-
-            }
-        };
-
-        foodListAdapter.setFilterQueryProvider(searchFilter);
-
-        Log.d(TAG, "Getting fragment for list adapter");
-        listTabFragment.setListAdapter(foodListAdapter);
-
-        Log.d(TAG, "tagOfPosition 0: " + pagerAdapter.getTagOfPosition(0));
-        if (!pagerAdapter.getTagOfPosition(0).equals("Empty String")){
-            ListFragment fragment = (ListFragment) getSupportFragmentManager().findFragmentByTag(pagerAdapter.getTagOfPosition(0));
-            fragment.setListAdapter(foodListAdapter);
-            Log.d(TAG,"Fragment recovered and adapter set");
-        }
-
-        Log.d(TAG, "Adapter setup for main list");
-
-    }
-
-    public void populateEatenListFragment(){
-
-        eatenListAdapter = new SimpleCursorAdapter(this,R.layout.food_item_listview, null,
-                new String[] { "_id","foodItemName", "foodItemLocation"},
-                new int[] {R.id.foodId, R.id.foodItemNameTextView, R.id.foodItemLocationTextView},0);
-
-        searchFilter = new FilterQueryProvider() {
-
-            @Override
-            public Cursor runQuery(CharSequence constraint) {
-
-                // TODO - Need a dbTools method for eaten filtered foods
-                return dbTools.getCursorAllFilteredFoodItems(constraint.toString());
-
-            }
-        };
-
-        eatenListAdapter.setFilterQueryProvider(searchFilter);
-
-        Log.d(TAG, "Getting fragment for list adapter");
-        eatenTabFragment.setListAdapter(eatenListAdapter);
-
-        // Check that if there is a fragment to recover, (i.e. from orientation changes),
-        // that it receives the adapter
-        Log.d(TAG, "tagOfPosition 1: " + pagerAdapter.getTagOfPosition(1));
-        if (!pagerAdapter.getTagOfPosition(1).equals("Empty String")){ // Empty String is default fail response
-            ListFragment fragment = (ListFragment) getSupportFragmentManager().findFragmentByTag(pagerAdapter.getTagOfPosition(1));
-            fragment.setListAdapter(eatenListAdapter);
-            Log.d(TAG,"Fragment recovered and adapter set");
-        }
-
-        Log.d(TAG, "Adapter setup for eaten list");
-
-    }
-
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         // request code is the code sent out from startActivityForResult
         // result code is the first argument in setResult() from the returning intent
@@ -201,18 +117,10 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         Log.d(TAG, "EDIT_FOOD_ITEM: " + Integer.toString(EDIT_FOOD_ITEM));
         Log.d(TAG, "NEW_FOOD_ITEM: " + Integer.toString(NEW_FOOD_ITEM));
 
-        switch (requestCode) {
-
-            case NEW_FOOD_ITEM:
-                Log.d(TAG,"Returned from NEW FOOD");
-                refreshFoodList();
-                break;
-
-            case EDIT_FOOD_ITEM:
-                Log.d(TAG,"Returned from EDIT FOOD");
-                refreshFoodList();
-                break;
-        }
+        //Use eventbus to notify fragments
+        //send a foodId value via event.setFoodId
+        Log.d(TAG, "Posted on EventBus");
+        EventBus.getDefault().post(event);
 
     }
 
@@ -220,92 +128,9 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
     protected void onDestroy() {
 
         Log.i(TAG,"calling onDestroy()");
-        getSupportLoaderManager().destroyLoader(FULL_FOOD_LIST);
-        getSupportLoaderManager().destroyLoader(EATEN_LIST);
         dbTools.close();
 
         super.onDestroy();
-    }
-
-    public FoodListLoader onCreateLoader(int id, Bundle args) {
-
-        switch (id) {
-
-            case FULL_FOOD_LIST:
-                foodListLoader = new FoodListLoader(getApplicationContext());
-                Log.d(TAG, "LoaderID: " + Integer.toString(id) + " foodListLoader FoodLoader Created");
-                return foodListLoader;
-
-            case EATEN_LIST:
-                eatenListLoader = new FoodListLoader(getApplicationContext());
-                Log.d(TAG, "LoaderID: " + Integer.toString(id) + " eatenListLoader FoodLoader Created");
-                return eatenListLoader;
-            default:
-                Log.wtf(TAG, "Got unhandled LoaderID: " + Integer.toString(id));
-                return null;
-        }
-
-    }
-
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        //Once data is ready, swap in the new data
-
-        switch (loader.getId()){
-
-            case FULL_FOOD_LIST:
-                Log.d(TAG, "foodListAdapter about to swap");
-                foodListAdapter.swapCursor(data);
-                Log.i("Main-LoadManag", "foodListAdapter cursor swapped");
-                Log.d("MainActivity", "loaderID: " + Integer.toString(loader.getId()));
-                if (data != null) {
-                    Log.d("Main-LoadManag", "Rows update: " + Integer.toString(data.getCount()));
-                } else {
-                    Log.d("Main-LoadManag", "Rows update: " + "Cursor was null");
-                }
-                break;
-
-            case EATEN_LIST:
-                Log.d(TAG, "eatenListAdapter about to swap");
-                if (data != null) {
-                    eatenCursorWrapper = new FoodListCursorWrapper(data, dbTools.EATEN, dbTools.EATEN_COL);
-                } else {
-                    eatenCursorWrapper = null;
-                }
-
-                eatenListAdapter.swapCursor(eatenCursorWrapper);
-
-                Log.i("Main-LoadManag", "eatenListAdapter cursor swapped");
-                Log.d("MainActivity", "loaderID: " + Integer.toString(loader.getId()));
-                if (data != null) {
-                    Log.d("Main-LoadManag", "Rows update: " + Integer.toString(data.getCount()));
-                } else {
-                    Log.d("Main-LoadManag", "Rows update: " + "Cursor was null");
-                }
-                break;
-
-            default:
-                Log.wtf(TAG, "onLoadFinished: Default case triggered unexpectedly");
-                break;
-        }
-
-    }
-
-    public void onLoaderReset(Loader<Cursor> loader) {
-        //Un-map all the information
-        foodListAdapter.swapCursor(null);
-        eatenListAdapter.swapCursor(null);
-    }
-
-    public void refreshFoodList(){
-
-        Log.i(TAG, "Refreshing Food List");
-
-        Log.d(TAG, "Triggering foodListLoader.onContentChanged");
-        foodListLoader.onContentChanged();
-
-        Log.d(TAG, "Triggering eatenListLoader.onContentChanged");
-        eatenListLoader.onContentChanged();
-
     }
 
     public void refreshFoodList(String eaten, String foodId){
@@ -322,6 +147,7 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
     public void showAddFoodItem(View view) {
         Intent theIntent = new Intent(getApplicationContext(), NewFoodItem.class);
 
+        //TODO - remove ACTIVE_TAB extra
         theIntent.putExtra(ACTIVE_TAB, 0);
 
         Toast.makeText(getApplicationContext(), "Sending Intent to NewFoodItem", Toast.LENGTH_SHORT).show();
@@ -335,10 +161,11 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
     public void searchMainList(){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Title");
+        builder.setTitle("Search");
 
         // Set up the input
         final EditText input = new EditText(this);
+        input.setGravity(EditText.TEXT_ALIGNMENT_CENTER);
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -366,7 +193,7 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
     public void filterMainList(String search){
         Log.d(TAG, "setting filter to: " + search);
 
-        foodListAdapter.getFilter().filter(search.toString());
+        //foodListAdapter.getFilter().filter(search.toString());
 
     }
 
@@ -402,7 +229,8 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         Toast.makeText(getApplicationContext(), "Deleted all", Toast.LENGTH_SHORT).show();
         dbTools.clearAllRows();
 
-        refreshFoodList();
+        //TODO - use a different event for deletion update
+        EventBus.getDefault().post(event);
 
     }
 
@@ -422,8 +250,8 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
         switch (item.getItemId()) {
 
             case R.id.action_search:
-                Toast.makeText(getApplicationContext(), "Searching", Toast.LENGTH_SHORT).show();
-                searchMainList();
+                Toast.makeText(getApplicationContext(), "Not Searching", Toast.LENGTH_SHORT).show();
+                //searchMainList();
                 return true;
 
             case R.id.action_new_item:
@@ -436,12 +264,10 @@ public class MainActivity extends ActionBarActivity implements LoaderManager.Loa
 
             case R.id.action_main_help:
                 Toast.makeText(this,"No.",Toast.LENGTH_SHORT).show();
-                //showMainListHelpDialog();
                 return true;
 
             case R.id.action_refresh:
-                Toast.makeText(getApplicationContext(), "Refreshed!", Toast.LENGTH_SHORT).show();
-                refreshFoodList();
+                Toast.makeText(getApplicationContext(), "Not Refreshed!", Toast.LENGTH_SHORT).show();
                 return true;
 
             default:
