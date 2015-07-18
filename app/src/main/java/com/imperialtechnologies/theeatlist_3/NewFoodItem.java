@@ -650,13 +650,15 @@ public class NewFoodItem extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                overridePendingTransition(R.animator.fade_rise, R.animator.push_right_out);
+                return true;
             case R.id.action_save:
                 saveFoodItem(findViewById(R.id.action_save));
                 return true;
-            case R.id.action_settings:
-                Toast.makeText(getApplicationContext(), "Settings", Toast.LENGTH_SHORT).show();
-                return true;
             case R.id.action_help:
+                Toast.makeText(getApplicationContext(), "No.", Toast.LENGTH_SHORT).show();
                 //showAddFoodHelpDialog();
                 return true;
             default:
@@ -665,7 +667,14 @@ public class NewFoodItem extends ActionBarActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.animator.fade_rise, R.animator.push_right_out);
+    }
+
+    @Override
     protected void onDestroy() {
+        dbTools.close();
         super.onDestroy();
     }
 }
